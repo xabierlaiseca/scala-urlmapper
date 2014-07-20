@@ -1,79 +1,51 @@
 package me.laiseca.urldispatcher.model
 
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.collection.mutable
-
 /**
- * Created by xabier on 16/07/14.
+ * Created by Xabier Laiseca on 16/07/14.
  */
-//class NonEmptyTrieTest extends FlatSpec with Matchers {
-//
-//  "Trie apply" should "build a single branch tree" in {
-//    Trie(List(1, 2, 3) -> "1 to 3") should be {
-//      new Trie(
-//        Map(1 -> new Trie(
-//          Map(2 -> new Trie(
-//            Map(3 -> new Trie(
-//              Map.empty[Int, Trie[Int, String]], Option("1 to 3")
-//            )), Option.empty[String]
-//          )), Option.empty[String]
-//        )), Option.empty[String]
-//      )
-//    }
-//  }
-//
-//  it should "build a 2 branch tree with common root" in {
-//    Trie(List(1, 2) -> "1 and 2", List(1, 3) -> "1 and 3") should be {
-//      new Trie(
-//        Map(1 -> new Trie(
-//          Map(2 -> new Trie(Map.empty[Int, Trie[Int, String]], Option("1 and 2")),
-//            3 -> new Trie(Map.empty[Int, Trie[Int, String]], Option("1 and 3"))
-//          ), Option.empty[String])),
-//        Option.empty[String]
-//      )
-//    }
-//  }
-//
-//  it should "build a 2 branch tree with no common root" in {
-//    Trie(List(1, 2) -> "1 and 2", List(2, 3) -> "2 and 3") should be {
-//      new Trie(
-//        Map(1 -> new Trie(
-//          Map(2 -> new Trie(
-//            Map.empty[Int, Trie[Int, String]], Option("1 and 2"))
-//          ), Option.empty[String]),
-//          2 -> new Trie(
-//            Map(3 -> new Trie(
-//              Map.empty[Int, Trie[Int, String]], Option("2 and 3"))
-//            ), Option.empty[String])
-//        ),
-//        Option.empty[String]
-//      )
-//    }
-//  }
-//
-//  it should "build a 2 branch tree with longest first" in {
-//    Trie(List(1, 2, 3) -> "1 and 2 and 3", List(1, 3) -> "1 and 3") should be {
-//      new Trie(
-//        Map(1 -> new Trie(
-//          Map(2 -> new Trie(
-//            Map[Int, Trie[Int, String]](
-//              3 -> new Trie(
-//                Map.empty[Int, Trie[Int, String]], Option("1 and 2 and 3")
-//              )
-//            ), Option.empty[String])
-//          ), Option.empty[String]),
-//          1 -> new Trie(
-//            Map(3 -> new Trie(
-//              Map.empty[Int, Trie[Int, String]], Option("1 and 3"))
-//            ), Option.empty[String])
-//        ),
-//        Option.empty[String]
-//      )
-//    }
-//  }
-//
-//}
+
+class TrieTest extends FlatSpec with Matchers with MockitoSugar {
+  import org.mockito.Mockito._
+
+  class TestTrie[K, +V] extends Trie[K, V] {
+    override protected[model] def add[V1 >: V](kv: (List[K], Option[V1])): Trie[K, V1] = null
+    override def -(key: List[K]): Trie[K, V] = ???
+    override def get(key: List[K]): Option[V] = ???
+    override def iterator: Iterator[(List[K], V)] = ???
+  }
+
+  "operator '+'" should "call 'add' with defined value" in {
+    val newElement = List(1, 2) -> "value"
+    val newTrie = mock[Trie[Int, String]]
+    val testObj = mock[TestTrie[Int, String]](withSettings defaultAnswer CALLS_REAL_METHODS)
+
+    when(testObj add (List(1, 2) -> Option("value"))) thenReturn newTrie
+
+    (testObj + newElement) should be { newTrie }
+  }
+
+  it should "not call 'add' with empty value" in {
+    val newElement = List(1, 2) -> null
+    val testObj = mock[TestTrie[Int, String]](withSettings defaultAnswer CALLS_REAL_METHODS)
+
+    (testObj + newElement) should be { testObj }
+  }
+
+  "apply" should "return empty map when 0 parameters are provided" in {
+    Trie() should be { Trie.empty }
+  }
+
+  it should "create a new trie with the given elements when parameters are given" in {
+    Trie(List(1) -> "1") should be {
+      new NonEmptyTrie(Map(
+        1 -> new NonEmptyTrie(Map.empty[Int, Trie[Int, String]], Option("1"))
+      ), None)
+    }
+  }
+}
 
 class NilTrieTest extends FlatSpec with Matchers {
   "iterator" should "return empty iterator" in {
@@ -211,9 +183,7 @@ class NonEmptyTrieTest extends FlatSpec with Matchers {
       new NonEmptyTrie(Map.empty[Int, Trie[Int, String]], Option("root"))
     }
 
-    newTrie.asInstanceOf[NonEmptyTrie[Int, String]].nodes should be {
-      Map.empty
-    }
+    newTrie.asInstanceOf[NonEmptyTrie[Int, String]].nodes should be { Map.empty }
   }
 
   it should "return empty trie when no nodes are left" in {
