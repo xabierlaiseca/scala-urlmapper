@@ -1,4 +1,4 @@
-package me.laiseca.urldispatcher.model
+package me.laiseca.urlmapper.model
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
@@ -15,6 +15,8 @@ class TrieTest extends FlatSpec with Matchers with MockitoSugar {
     override def -(key: List[K]): Trie[K, V] = ???
     override def get(key: List[K]): Option[V] = ???
     override def iterator: Iterator[(List[K], V)] = ???
+    override def subtrie(node: K): Trie[K, V] = ???
+    override def value: Option[V] = ???
   }
 
   "operator '+'" should "call 'add' with defined value" in {
@@ -70,8 +72,12 @@ class NilTrieTest extends FlatSpec with Matchers {
     }
   }
 
-  "operator '-'" should "return a empty trie" in {
+  "operator '-'" should "return an empty trie" in {
     NilTrie - List(1) should be { NilTrie }
+  }
+
+  "subtrie" should "return an empty trie" in {
+    NilTrie subtrie 1 should be { NilTrie }
   }
 }
 
@@ -190,5 +196,17 @@ class NonEmptyTrieTest extends FlatSpec with Matchers {
     new NonEmptyTrie(Map.empty[Int, Trie[Int, String]], Option("root")) - List() should be {
       Trie.empty
     }
+  }
+
+  "subtrie" should "return a subtrie when an existing node key is given" in {
+    trie subtrie 1 should be {
+      new NonEmptyTrie(Map(
+        2 -> new NonEmptyTrie(Map.empty[Int, Trie[Int, String]], Option("1 and 2"))
+      ), None)
+    }
+  }
+
+  it should "return empty trie when a not existing node key is given" in {
+    trie subtrie 2 should be { NilTrie }
   }
 }
