@@ -1,6 +1,6 @@
 package me.laiseca.urlmapper
 
-import me.laiseca.urlmapper.model.Trie
+import me.laiseca.urlmapper.trie.Trie
 import org.scalatest.{Matchers, FlatSpec}
 
 /**

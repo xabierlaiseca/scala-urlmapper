@@ -2,7 +2,7 @@ package me.laiseca.urlmapper
 
 import java.util.StringTokenizer
 
-import me.laiseca.urlmapper.model.{NilTrie, Trie}
+import me.laiseca.urlmapper.trie.{NilTrie, Trie}
 
 /**
  * Created by Xabier Laiseca on 20/07/14.
