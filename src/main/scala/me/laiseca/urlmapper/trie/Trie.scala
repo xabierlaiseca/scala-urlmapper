@@ -1,4 +1,4 @@
-package me.laiseca.urlmapper.model
+package me.laiseca.urlmapper.trie
 
 import scala.collection.MapLike
 
@@ -11,7 +11,7 @@ trait Trie[K, +V] extends Iterable[(List[K], V)] with Traversable[(List[K], V)] 
   def +[V1 >: V](kv: (List[K], V1)): Trie[K, V1] =
     if(kv._2 == null) this else this add (kv._1 -> Some(kv._2))
 
-  protected[model] def add[V1 >: V](kv: (List[K], Option[V1])): Trie[K, V1]
+  protected[trie] def add[V1 >: V](kv: (List[K], Option[V1])): Trie[K, V1]
 
   def -(key: List[K]): Trie[K, V]
 
@@ -29,7 +29,7 @@ object Trie {
   }
 }
 
-private[model] case class NonEmptyTrie[K, V](nodes: Map[K, Trie[K, V]], value: Option[V]) extends Trie[K, V] {
+private[trie] case class NonEmptyTrie[K, V](nodes: Map[K, Trie[K, V]], value: Option[V]) extends Trie[K, V] {
   override def isEmpty = false
 
   override def iterator: Iterator[(List[K], V)] = value.foldLeft {
@@ -45,7 +45,7 @@ private[model] case class NonEmptyTrie[K, V](nodes: Map[K, Trie[K, V]], value: O
                     else None
   }
 
-  override protected[model] def add[V1 >: V](kv: (List[K], Option[V1])): Trie[K, V1] = kv._1 match {
+  override protected[trie] def add[V1 >: V](kv: (List[K], Option[V1])): Trie[K, V1] = kv._1 match {
     case Nil => new NonEmptyTrie(nodes, kv._2)
     case e :: es => new NonEmptyTrie(
       nodes + (e -> (nodes.getOrElse(e, Trie.empty[K, V1]) add (es -> kv._2))),
@@ -72,7 +72,7 @@ case object NilTrie extends Trie[Any, Nothing] {
   override def iterator: Iterator[(List[Any], Nothing)] = Iterator.empty
   override def get(key: List[Any]): Option[Nothing] = None
 
-  override protected[model] def add[V1 >: Nothing](kv: (List[Any], Option[V1])): Trie[Any, V1] = kv._1 match {
+  override protected[trie] def add[V1 >: Nothing](kv: (List[Any], Option[V1])): Trie[Any, V1] = kv._1 match {
     case Nil => new NonEmptyTrie[Any, V1](Map.empty, kv._2)
     case e :: es => new NonEmptyTrie[Any, V1](Map(e -> (NilTrie add (es -> kv._2))), None)
   }
