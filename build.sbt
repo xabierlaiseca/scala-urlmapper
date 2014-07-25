@@ -1,6 +1,8 @@
-name := "url-dispatcher"
+organization := "me.laiseca.urlmapper"
 
-version := "1.0"
+name := "url-mapper"
+
+version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
