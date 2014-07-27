@@ -10,20 +10,20 @@ class UrlMapperTest extends FlatSpec with Matchers {
   val ROOT_PATH = List.empty[UrlSegment]
   val ROOT = "root element"
   val ROOT_URL = "/"
-  val ROOT_MAPPING = UrlMapping(ROOT_URL, ROOT)
+  val ROOT_MAPPING = UrlMapping(ROOT_URL, ROOT_PATH, ROOT)
   val PETS_PATH = List(FixedValueUrlSegment("api"), FixedValueUrlSegment("pets"))
   val PETS = "There are 10 pets!!"
   val PETS_URL = "/api/pets"
-  val PETS_MAPPING = UrlMapping(PETS_URL, PETS)
+  val PETS_MAPPING = UrlMapping(PETS_URL, PETS_PATH, PETS)
   val PET_INDIVIDUAL_PATH = List(FixedValueUrlSegment("api"), FixedValueUrlSegment("pets"), WildcardUrlSegment)
   val PET_INDIVIDUAL = "Pet individual"
   val PET_INDIVIDUAL_URL = PETS_URL + "/*"
-  val PET_INDIVIDUAL_MAPPING = UrlMapping(PET_INDIVIDUAL_URL, PET_INDIVIDUAL)
+  val PET_INDIVIDUAL_MAPPING = UrlMapping(PET_INDIVIDUAL_URL, PET_INDIVIDUAL_PATH, PET_INDIVIDUAL)
   val FOODS_PATH = List(FixedValueUrlSegment("api"), FixedValueUrlSegment("foods"), RecursiveWildcardUrlSegment)
   val FOODS = "Food for pets!!"
   val FOODS_BASE_URL = "/api/foods"
   val FOODS_URL = FOODS_BASE_URL + "/**"
-  val FOODS_MAPPING = UrlMapping(FOODS_URL, FOODS)
+  val FOODS_MAPPING = UrlMapping(FOODS_URL, FOODS_PATH, FOODS)
 
   val trie = Trie(ROOT_PATH -> ROOT_MAPPING,
     PETS_PATH -> PETS_MAPPING,

@@ -40,8 +40,14 @@ class UrlMapper[T](val paths: Trie[UrlSegment, UrlMapping[T]]) {
 object UrlMapper {
   def apply[T](paths: Trie[UrlSegment, UrlMapping[T]]): UrlMapper[T] = new UrlMapper(paths)
 
-  def apply[T](wildcard: String, recursiveWildcard: String, mappings: (String, T)*): UrlMapper[T] = apply(Trie(mappings map(
-    mapping => toUrlSegments(mapping._1, wildcard, recursiveWildcard) -> UrlMapping(mapping._1, mapping._2)) :_*))
+  def apply[T](wildcard: String, recursiveWildcard: String, mappings: (String, T)*): UrlMapper[T] = apply {
+    val elements = for {
+      mapping <- mappings
+      segments = toUrlSegments(mapping._1, wildcard, recursiveWildcard)
+    } yield segments -> UrlMapping(mapping._1, segments, mapping._2)
+
+    Trie(elements:_*)
+  }
 
   def apply[T](mappings: (String, T)*): UrlMapper[T] = apply("*", "**", mappings:_*)
 
@@ -58,10 +64,3 @@ object UrlMapper {
     }
   }
 }
-
-case class UrlMapping[T](template: String, value: T)
-
-trait UrlSegment
-case class FixedValueUrlSegment(segment: String) extends UrlSegment
-object WildcardUrlSegment extends UrlSegment
-object RecursiveWildcardUrlSegment extends UrlSegment
