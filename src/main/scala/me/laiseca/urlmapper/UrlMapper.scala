@@ -1,66 +1,71 @@
 package me.laiseca.urlmapper
 
-import java.util.StringTokenizer
-
-import me.laiseca.urlmapper.trie.{NilTrie, Trie}
+import me.laiseca.urlmapper.trie.Trie
 
 /**
- * Created by Xabier Laiseca on 20/07/14.
+ * Created by Xabier Laiseca on 27/07/14.
  */
-class UrlMapper[T](val paths: Trie[UrlSegment, UrlMapping[T]]) {
-  import UrlMapper._
-
-  private type PathTrie = Trie[UrlSegment, UrlMapping[T]]
-
-  def map(url: String): List[UrlMapping[T]] = {
-
-    def mappings(current: UrlSegment, rest: List[String], paths: PathTrie) = {
-      val subtrie = paths subtrie current
-      if (subtrie.isEmpty) Nil else map(rest, subtrie)
-    }
-
-    def fixedMappings(segments: List[String], paths: PathTrie): List[UrlMapping[T]] =
-      mappings(new FixedValueUrlSegment(segments.head), segments.tail, paths)
-
-    def wildcardMappings(segments: List[String], paths: PathTrie): List[UrlMapping[T]] =
-      mappings(WildcardUrlSegment, segments.tail, paths)
-
-    def recursiveWildcardMapping(paths: PathTrie): List[UrlMapping[T]] =
-      mappings(RecursiveWildcardUrlSegment, Nil, paths)
-
-    def map(segments: List[String], paths: PathTrie): List[UrlMapping[T]] = segments match {
-      case Nil => paths.value.toList
-      case _ => recursiveWildcardMapping(paths) ::: fixedMappings(segments, paths) ::: wildcardMappings(segments, paths)
-    }
-
-    map(toSegments(url), paths)
-  }
+trait UrlMapper[T] {
+  def map(url: String): Option[T]
 }
 
 object UrlMapper {
-  def apply[T](paths: Trie[UrlSegment, UrlMapping[T]]): UrlMapper[T] = new UrlMapper(paths)
-
-  def apply[T](wildcard: String, recursiveWildcard: String, mappings: (String, T)*): UrlMapper[T] = apply {
-    val elements = for {
+  private def toPathTrie[T] (wildcard: String, recursiveWildcard: String, mappings: (String, T)*): PathTrie[T] =
+    Trie((for {
       mapping <- mappings
       segments = toUrlSegments(mapping._1, wildcard, recursiveWildcard)
-    } yield segments -> UrlMapping(mapping._1, segments, mapping._2)
+    } yield segments -> UrlMapping(mapping._1, segments, mapping._2)):_*)
 
-    Trie(elements:_*)
-  }
+  def apply[T](paths: PathTrie[T]): UrlMapper[T] = new DefaultUrlMapper(paths)
+  def apply[T](paths: PathTrie[T], selectionAlgorithm: UrlMappingSelectionAlgorithm): UrlMapper[T] =
+    new CustomizableUrlMapper(paths, selectionAlgorithm)
+
+  def apply[T](wildcard: String, recursiveWildcard: String, mappings: (String, T)*): UrlMapper[T] =
+    apply(toPathTrie(wildcard, recursiveWildcard, mappings:_*))
+
+  def apply[T](wildcard: String, recursiveWildcard: String, selectionAlgorithm: UrlMappingSelectionAlgorithm,
+               mappings: (String, T)*): UrlMapper[T] =
+    apply(toPathTrie(wildcard, recursiveWildcard, mappings:_*), selectionAlgorithm)
 
   def apply[T](mappings: (String, T)*): UrlMapper[T] = apply("*", "**", mappings:_*)
+  def apply[T]( selectionAlgorithm: UrlMappingSelectionAlgorithm, mappings: (String, T)*): UrlMapper[T] =
+    apply("*", "**", selectionAlgorithm, mappings:_*)
+}
 
-  private def toUrlSegments(url: String, wildcard: String, recursiveWildcard: String) = toSegments(url) map {
-    case `wildcard` => WildcardUrlSegment
-    case `recursiveWildcard` => RecursiveWildcardUrlSegment
-    case other => FixedValueUrlSegment(other)
-  }
+class CustomizableUrlMapper[T] private[urlmapper] (val paths: PathTrie[T],
+    val selectionAlgorithm: UrlMappingSelectionAlgorithm) extends UrlMapper[T] {
+  private val matcher = new UrlMatcher
 
-  private def toSegments(url: String) = {
-    import scala.collection.JavaConversions._
-    new StringTokenizer(url, "/").foldRight(List[String]()) {
-      (current, list) => current.asInstanceOf[String] :: list
+  override def map(url: String): Option[T] =
+    matcher.matchUrl(url, paths) match {
+      case Nil => None
+      case options: List[UrlMapping[T]] => Some(selectionAlgorithm.select[T](options).value)
     }
+}
+
+class DefaultUrlMapper[T] private[urlmapper] (val paths: PathTrie[T]) extends UrlMapper[T] {
+  override def map(url: String): Option[T] = {
+    def mapping(current: UrlSegment, rest: List[String], paths: PathTrie[T]) = {
+      val subtrie = paths subtrie current
+      if (subtrie.isEmpty) None else map(rest, subtrie)
+    }
+
+    def fixedMappings(segments: List[String], paths: PathTrie[T]): Option[UrlMapping[T]] =
+      mapping(new FixedValueUrlSegment(segments.head), segments.tail, paths)
+
+    def wildcardMappings(segments: List[String], paths: PathTrie[T]): Option[UrlMapping[T]] =
+      mapping(WildcardUrlSegment, segments.tail, paths)
+
+    def recursiveWildcardMapping(paths: PathTrie[T]): Option[UrlMapping[T]] =
+      mapping(RecursiveWildcardUrlSegment, Nil, paths)
+
+    def map(segments: List[String], paths: PathTrie[T]): Option[UrlMapping[T]] = segments match {
+      case Nil => paths.value
+      case _ => fixedMappings(segments, paths).
+        orElse(wildcardMappings(segments, paths)).
+        orElse(recursiveWildcardMapping(paths))
+    }
+
+    map(toSegments(url), paths).map(_.value)
   }
 }

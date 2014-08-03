@@ -4,9 +4,9 @@ import me.laiseca.urlmapper.trie.Trie
 import org.scalatest.{Matchers, FlatSpec}
 
 /**
- * Created by Xabier Laiseca on 28/07/14.
+ * Created by Xabier Laiseca on 23/07/14.
  */
-class DefaultUrlMapperTest extends FlatSpec with Matchers {
+class UrlMatcherTest extends FlatSpec with Matchers {
   val ROOT_PATH = List.empty[UrlSegment]
   val ROOT = "root element"
   val ROOT_URL = "/"
@@ -31,29 +31,29 @@ class DefaultUrlMapperTest extends FlatSpec with Matchers {
     FOODS_PATH -> FOODS_MAPPING
   )
 
-  val mapper = new DefaultUrlMapper[String](trie)
+  val matcher = new UrlMatcher()
 
-  "map" should "return the expected object for fully fixed url template match" in {
-    mapper map PETS_URL should be { Some(PETS) }
+  "matchUrl" should "return the expected object for fully fixed url template match" in {
+    matcher matchUrl (PETS_URL, trie) should be { List(PETS_MAPPING) }
   }
 
   it should "return the expected object for url template with wildcard" in {
-    mapper map (PETS_URL + "/10") should be { Some(PET_INDIVIDUAL) }
+    matcher matchUrl (PETS_URL + "/10", trie) should be { List(PET_INDIVIDUAL_MAPPING) }
   }
 
   it should "return the expected object for url template with recursive wildcard" in {
-    mapper map (FOODS_BASE_URL + "/10/description") should be { Some(FOODS) }
+    matcher matchUrl (FOODS_BASE_URL + "/10/description", trie) should be { List(FOODS_MAPPING) }
   }
 
   it should "return the base mapping for '/'" in {
-    mapper map ROOT_URL should be { Some(ROOT) }
+    matcher matchUrl (ROOT_URL, trie) should be { List(ROOT_MAPPING) }
   }
 
   it should "return no results when no matching template going through fully fixed path" in {
-    mapper map "/api/unknown" should be { None }
+    matcher matchUrl ("/api/unknown", trie) should be { Nil }
   }
 
   it should "return no results when no matching template going through path with wildcard" in {
-    mapper map (PETS_URL + "/10/unknown") should be { None }
+    matcher matchUrl (PETS_URL + "/10/unknown", trie) should be { Nil }
   }
 }

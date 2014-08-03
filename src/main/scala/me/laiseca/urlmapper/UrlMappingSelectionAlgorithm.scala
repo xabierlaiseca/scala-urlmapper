@@ -10,7 +10,7 @@ trait UrlMappingSelectionAlgorithm {
 class DefaultUrlMappingSelectionAlgorithm extends UrlMappingSelectionAlgorithm {
   override def select[T](mappings: List[UrlMapping[T]]): UrlMapping[T] = {
 
-    def selectRec[T](mappings: (List[UrlSegment], UrlMapping[T])*): UrlMapping[T] = {
+    def selectRec(mappings: (List[UrlSegment], UrlMapping[T])*): UrlMapping[T] = {
       val x :: xs = mappings
 
       xs match {
