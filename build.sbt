@@ -2,7 +2,7 @@ organization := "me.laiseca.urlmapper"
 
 name := "url-mapper"
 
-version := "0.0.2"
+version := "0.0.3-SNAPSHOT"
 
 licenses := Seq("Apache 2" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
 
